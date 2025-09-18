@@ -1,0 +1,7 @@
+//add member page
+//form adding new member : ชื่อ th ชื่อ en เบอร์โทร email ส่วนสูง อายุ
+// add to member array in data/members.ts
+//use hooks form  ,zustand
+//redirect to /members after submit
+
+NOTE: Archived incomplete page previously at src/addmember/page.tsx to prevent TS build errors.
