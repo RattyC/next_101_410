@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/config/nav";
 import { useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Navbar() {
   const pathname = usePathname() || "/";
@@ -12,13 +13,18 @@ export default function Navbar() {
   return (
     <div className="border-b border-black/10 bg-white sticky top-0 z-40">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 flex items-center justify-between py-3">
-        <Link href="/" className="font-semibold tracking-tight focus:outline-none focus:ring-2 focus:ring-black/30 rounded">
-          CS Portfolio
+        <Link
+          href="/"
+          aria-label="CS 410 Home"
+          className="font-semibold tracking-tight focus:outline-none focus:ring-2 focus:ring-black/30 rounded"
+        >
+          CS 410
         </Link>
         <button
           className="sm:hidden px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10"
           aria-label="Toggle navigation"
           aria-expanded={open}
+          aria-controls="main-nav-mobile"
           onClick={() => setOpen((v) => !v)}
         >
           ☰
@@ -45,10 +51,15 @@ export default function Navbar() {
               </Link>
             );
           })}
+          <ThemeToggle />
         </nav>
       </div>
       {open && (
-        <nav className="mx-auto max-w-6xl px-4 sm:px-6 sm:hidden flex flex-col gap-2 pb-3" aria-label="Main">
+        <nav
+          id="main-nav-mobile"
+          className="mx-auto max-w-6xl px-4 sm:px-6 sm:hidden flex flex-col gap-2 pb-3"
+          aria-label="Main"
+        >
           {NAV_ITEMS.map((item) => {
             const active =
               pathname === item.href ||
@@ -70,6 +81,9 @@ export default function Navbar() {
               </Link>
             );
           })}
+          <div className="pt-2 border-t">
+            <ThemeToggle />
+          </div>
         </nav>
       )}
     </div>

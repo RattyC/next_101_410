@@ -6,18 +6,24 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 
 export const metadata: Metadata = {
   title: {
-    default: "CS Portfolio",
-    template: "%s · CS Portfolio",
+    default: "CS 410",
+    template: "%s · CS 410",
   },
   description: "Showcase, members, and updates from the CS team.",
-  metadataBase: new URL("https://example.com"),
+  // Use env for canonical URLs in production; fallback for local dev
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   robots: { index: true, follow: true },
   openGraph: {
-    title: "CS Portfolio",
+    title: "CS 410",
     description: "Showcase, members, and updates from the CS team.",
     type: "website",
-    url: "https://example.com",
+    url: "/",
   },
+  alternates: { canonical: "/" },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
@@ -30,7 +36,7 @@ export default function RootLayout({
       <body className="antialiased bg-white text-gray-900">
         <a href="#content" className="sr-only focus:not-sr-only focus:block p-2">Skip to content</a>
         <Navbar />
-        <main id="content" className="mx-auto max-w-6xl px-4 sm:px-6">
+        <main id="content" tabIndex={-1} className="mx-auto max-w-6xl px-4 sm:px-6">
           <Breadcrumbs />
           {children}
         </main>
