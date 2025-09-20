@@ -3,14 +3,12 @@
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { usePortfolioStore } from "@/store/portfolioStore";
 import type { NewPortfolio } from "@/types/portfolio";
 
 type FormInputs = NewPortfolio;
 
 export default function NewPortfolioPage() {
   const router = useRouter();
-  const add = usePortfolioStore((s) => s.add);
   const {
     register,
     handleSubmit,
@@ -40,12 +38,20 @@ export default function NewPortfolioPage() {
   const [localGallery, setLocalGallery] = useState<string[]>([]);
 
   async function onSubmit(data: FormInputs) {
-    const id = add({
+    const payload: FormInputs = {
       ...data,
       gpa: Number(data.gpa),
       photo: localPhoto,
       gallery: localGallery,
+    };
+    const res = await fetch("/api/portfolio", {
+      method: "POST",
+      body: JSON.stringify(payload),
     });
+    if (!res.ok) {
+      alert("บันทึกไม่สำเร็จ");
+      return;
+    }
     reset();
     router.push("/admin/portfolio");
   }
@@ -80,7 +86,7 @@ export default function NewPortfolioPage() {
     <div className="mx-auto max-w-4xl p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">เพิ่ม Portfolio (TCAS69)</h1>
-        <p className="text-sm text-gray-600">กรอกข้อมูลให้ครบถ้วน ข้อมูลจะถูกบันทึกไว้ในเครื่องของคุณ</p>
+        <p className="text-sm text-gray-600">กรอกข้อมูลให้ครบถ้วน ระบบจะบันทึกลงฐานข้อมูล</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 rounded-lg border bg-white p-5 shadow-sm">

@@ -1,14 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { usePortfolioStore } from "@/store/portfolioStore";
+import { useEffect, useMemo, useState } from "react";
 import { getPortfolioSeeds } from "@/data/portfolioSeed";
+import type { Portfolio } from "@/types/portfolio";
 
 type SortKey = "name" | "gpa" | "school" | "createdAt";
 
 export default function AdminPortfolioListPage() {
-  const portfolios = usePortfolioStore((s) => s.portfolios);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function refresh() {
+    setLoading(true);
+    const res = await fetch("/api/portfolio", { cache: "no-store" });
+    const data = await res.json();
+    setPortfolios(data);
+    setLoading(false);
+  }
+
+  useEffect(() => { refresh(); }, []);
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
@@ -53,7 +64,9 @@ export default function AdminPortfolioListPage() {
               className="rounded border px-4 py-2 hover:bg-gray-50 shadow-sm"
               onClick={() => {
                 const items = getPortfolioSeeds();
-                items.forEach((it) => usePortfolioStore.getState().add(it));
+                Promise.all(
+                  items.map((it) => fetch("/api/portfolio", { method: "POST", body: JSON.stringify(it) }))
+                ).then(refresh);
               }}
             >
               เติมข้อมูลตัวอย่าง
@@ -64,7 +77,7 @@ export default function AdminPortfolioListPage() {
               className="rounded border px-4 py-2 hover:bg-gray-50 shadow-sm"
               onClick={() => {
                 if (confirm("ยืนยันการล้างข้อมูลทั้งหมด?")) {
-                  usePortfolioStore.getState().clear();
+                  fetch("/api/portfolio", { method: "DELETE" }).then(refresh);
                 }
               }}
             >
@@ -108,7 +121,12 @@ export default function AdminPortfolioListPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {rows.length === 0 && (
+            {loading && (
+              <tr>
+                <td colSpan={5} className="px-3 py-6 text-center text-gray-500">กำลังโหลด...</td>
+              </tr>
+            )}
+            {!loading && rows.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-3 py-6 text-center text-gray-500">
                   ยังไม่มีข้อมูล กด "เพิ่ม Portfolio" หรือปุ่ม "เติมข้อมูลตัวอย่าง" เพื่อเริ่มต้น

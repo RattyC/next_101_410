@@ -1,16 +1,14 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { members as seedMembers, getMemberById } from "@/data/members";
-import { useMembers } from "@/store/membersStore";
 
-export default function MemberDetailPage() {
-  const params = useParams<{ id: string }>();
+export async function generateStaticParams() {
+  return seedMembers.map((m) => ({ id: m.id }));
+}
+
+export default function MemberDetailPage({ params }: any) {
   const id = params.id;
-  const extra = useMembers((s) => s.members);
-  const fromStore = extra.find((m) => m.id === id);
-  const member = fromStore ?? getMemberById(id);
+  const member = getMemberById(id);
+
   if (!member) {
     return (
       <main className="p-6">

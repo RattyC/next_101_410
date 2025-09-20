@@ -1,21 +1,47 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { usePortfolioStore } from "@/store/portfolioStore";
+import { getPortfolioSeeds } from "@/data/portfolioSeed";
 
 export default function PortfolioDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const portfolio = usePortfolioStore((s) => s.getById(params.id));
+  const [portfolio, setPortfolio] = React.useState<any>(null);
+  React.useEffect(() => {
+    const id = params.id as string;
+    fetch(`/api/portfolio/${id}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setPortfolio(d));
+  }, [params.id]);
 
   if (!portfolio) {
     return (
-      <div className="mx-auto max-w-4xl p-6">
-        <p className="mb-4">ไม่พบข้อมูลนักศึกษา</p>
-        <Link href="/admin/portfolio" className="text-blue-600 hover:underline">
-          กลับไปหน้าแอดมิน
-        </Link>
+      <div className="mx-auto max-w-4xl p-6 space-y-4">
+        <div className="rounded border bg-white p-4">
+          <p className="mb-2 font-medium">ไม่พบข้อมูลนักศึกษา</p>
+          <p className="text-sm text-gray-600">
+            ข้อมูลถูกเก็บในเบราว์เซอร์แต่ละโดเมน (localStorage).
+            หากเปิดลิงก์นี้บน Vercel โดยยังไม่เคยเพิ่มข้อมูลในโดเมนนั้น จะไม่พบรายการนี้
+            โปรดกลับไปหน้าแอดมินแล้วกด “เติมข้อมูลตัวอย่าง” หรือ “เพิ่ม Portfolio” ก่อน จากนั้นเปิดลิงก์รายละเอียดจากรายการนั้นอีกครั้ง
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            className="rounded border px-3 py-2 hover:bg-gray-50"
+            onClick={async () => {
+              const items = getPortfolioSeeds();
+              await Promise.all(items.map((it) => fetch("/api/portfolio", { method: "POST", body: JSON.stringify(it) })));
+              router.push("/admin/portfolio");
+            }}
+          >
+            เติมข้อมูลตัวอย่างและกลับไปหน้าแอดมิน
+          </button>
+          <Link href="/admin/portfolio" className="rounded border px-3 py-2 hover:bg-gray-50">
+            กลับไปหน้าแอดมิน
+          </Link>
+        </div>
       </div>
     );
   }
@@ -61,7 +87,7 @@ export default function PortfolioDetailPage() {
         <h2 className="text-lg font-medium mb-2">กิจกรรม/รางวัล/ผลงาน</h2>
         {portfolio.gallery?.length ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {portfolio.gallery.map((g, i) => (
+            {portfolio.gallery.map((g: string, i: number) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={i}
