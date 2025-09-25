@@ -62,11 +62,25 @@ export default function AdminPortfolioListPage() {
           {portfolios.length === 0 && (
             <button
               className="rounded border px-4 py-2 hover:bg-gray-50 shadow-sm"
-              onClick={() => {
+              onClick={async () => {
                 const items = getPortfolioSeeds();
-                Promise.all(
-                  items.map((it) => fetch("/api/portfolio", { method: "POST", body: JSON.stringify(it) }))
-                ).then(refresh);
+                try {
+                  for (const it of items) {
+                    const res = await fetch("/api/portfolio", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(it),
+                    });
+                    if (!res.ok) {
+                      throw new Error(`Seed failed with status ${res.status}`);
+                    }
+                  }
+                  await refresh();
+                } catch (err) {
+                  console.error(err);
+                  alert("เพิ่มข้อมูลตัวอย่างไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+                  setLoading(false);
+                }
               }}
             >
               เติมข้อมูลตัวอย่าง

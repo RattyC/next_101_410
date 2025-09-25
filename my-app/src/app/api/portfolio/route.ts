@@ -20,4 +20,5 @@ export async function DELETE() {
   await db.clear();
   return NextResponse.json({ ok: true });
 }
-
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";

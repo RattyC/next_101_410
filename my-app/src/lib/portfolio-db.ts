@@ -16,26 +16,43 @@ function genId() {
 }
 
 // Simple file persistence for local dev only
-const DATA_FILE = path.join(process.cwd(), ".data", "portfolio.json");
+const DATA_DIR = path.join(process.cwd(), ".data");
+const DATA_FILE = path.join(DATA_DIR, "portfolio.json");
+const TMP_FILE = path.join(DATA_DIR, "portfolio.tmp.json");
 
 async function ensureDataFile() {
   try {
-    await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
+    await fs.mkdir(DATA_DIR, { recursive: true });
     await fs.access(DATA_FILE);
   } catch {
-    await fs.writeFile(DATA_FILE, JSON.stringify({ index: [], items: {} }, null, 2));
+    await fs.writeFile(DATA_FILE, JSON.stringify({ index: [], items: {} }, null, 2), "utf8");
   }
 }
 
 async function readFileStore() {
   await ensureDataFile();
-  const raw = await fs.readFile(DATA_FILE, "utf8");
-  return JSON.parse(raw) as { index: string[]; items: Record<string, Portfolio> };
+  try {
+    const raw = await fs.readFile(DATA_FILE, "utf8");
+    return JSON.parse(raw) as { index: string[]; items: Record<string, Portfolio> };
+  } catch (e) {
+    // Self-heal corrupted file by resetting to empty structure
+    const empty = { index: [], items: {} as Record<string, Portfolio> };
+    try {
+      // Backup corrupted file
+      const bak = path.join(DATA_DIR, `portfolio.${Date.now()}.bak.json`);
+      await fs.rename(DATA_FILE, bak).catch(() => {});
+    } catch {}
+    await fs.writeFile(DATA_FILE, JSON.stringify(empty, null, 2), "utf8");
+    return empty;
+  }
 }
 
 async function writeFileStore(data: { index: string[]; items: Record<string, Portfolio> }) {
   await ensureDataFile();
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
+  const json = JSON.stringify(data, null, 2);
+  // Atomic write: write to temp then rename
+  await fs.writeFile(TMP_FILE, json, "utf8");
+  await fs.rename(TMP_FILE, DATA_FILE);
 }
 
 function fileDB(): DB {
@@ -68,12 +85,13 @@ const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST
 
 async function kvFetch(pathname: string, init?: RequestInit) {
   if (!KV_URL || !KV_TOKEN) throw new Error("KV not configured");
-  const url = KV_URL.replace(/\/$/, "") + pathname;
+  const base = new URL(KV_URL);
+  const path = pathname.startsWith("/") ? pathname : "/" + pathname;
+  const url = new URL(path, base).toString();
   const res = await fetch(url, {
     ...init,
     headers: {
       Authorization: `Bearer ${KV_TOKEN}`,
-      "Content-Type": "application/json",
       ...(init?.headers || {}),
     },
     cache: "no-store",
@@ -82,7 +100,12 @@ async function kvFetch(pathname: string, init?: RequestInit) {
     const text = await res.text();
     throw new Error(`KV error ${res.status}: ${text}`);
   }
-  return res.json() as Promise<any>;
+  const txt = await res.text();
+  try {
+    return JSON.parse(txt);
+  } catch {
+    return { result: txt };
+  }
 }
 
 async function kvGet<T>(key: string): Promise<T | null> {
@@ -97,13 +120,18 @@ async function kvGet<T>(key: string): Promise<T | null> {
 }
 
 async function kvSet<T>(key: string, value: T): Promise<void> {
-  const body = JSON.stringify(value);
-  // Try body form
+  const bodyString = JSON.stringify(value);
+  // Vercel KV style: POST /set/key with JSON { value }
   try {
-    await kvFetch(`/set/${encodeURIComponent(key)}`, { method: "POST", body });
-  } catch {
-    // Fallback to URL value
-    await kvFetch(`/set/${encodeURIComponent(key)}/${encodeURIComponent(body)}`, { method: "POST" });
+    await kvFetch(`/set/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value: bodyString }),
+    });
+    return;
+  } catch (_) {
+    // Upstash style fallback: POST /set/key/<value>
+    await kvFetch(`/set/${encodeURIComponent(key)}/${encodeURIComponent(bodyString)}`, { method: "POST" });
   }
 }
 
@@ -153,4 +181,3 @@ export function getPortfolioDB(): DB {
   // Local dev fallback: file persistence (Node runtime only)
   return fileDB();
 }
-

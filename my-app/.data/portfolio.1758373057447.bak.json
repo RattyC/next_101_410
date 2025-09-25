@@ -1,0 +1,42 @@
+{
+  "index": [
+    "MFS8RIUB1ZBRL4",
+    "MFS8RITWE5WHGE"
+  ],
+  "items": {
+    "MFS8RITWE5WHGE": {
+      "firstName": "Napat",
+      "lastName": "Prasert",
+      "address": "123/45 Chiang Mai, Thailand",
+      "phone": "081-234-5678",
+      "school": "Chiang Mai School",
+      "gpa": 3.78,
+      "talent": "Robotics & Arduino",
+      "motivation": "อยากพัฒนาทักษะด้านซอฟต์แวร์และฮาร์ดแวร์เพื่อนำไปทำโปรเจกต์จริง",
+      "skills": "TypeScript, React, C++",
+      "gallery": [],
+      "id": "MFS8RITWE5WHGE",
+      "createdAt": 1758371119124
+    },
+    "MFS8RIUB1ZBRL4": {
+      "firstName": "Pimchanok",
+      "lastName": "Suksawat",
+      "address": "201/3 Phuket, Thailand",
+      "phone": "082-333-4444",
+      "school": "Phuket School",
+      "gpa": 3.68,
+      "talent": "Data Analysis",
+      "motivation": "สนใจการวิเคราะห์ข้อมูลและทำ Dashboard",
+      "skills": "SQL, Python, Power BI",
+      "gallery": [],
+      "id": "MFS8RIUB1ZBRL4",
+      "createdAt": 1758371119139
+    }
+  }
+}ctures",
+      "gallery": [],
+      "id": "MFS8RIUBUGXNKV",
+      "createdAt": 1758371119139
+    }
+  }
+}
